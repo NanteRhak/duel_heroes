@@ -5,7 +5,7 @@ class Game:
         """Initialise l'état du jeu"""
         self.joueur1 = None
         self.joueur2 = None
-        self.moteur_combat = None
+        self.tour = None
         self.historique = []
         self.gagnant = None
 
@@ -41,8 +41,12 @@ class Game:
             bool: True si les deux joueurs sont prêts
         """
         if self.joueur1 and self.joueur2:
-            self.moteur_combat = CombatEngine(self.joueur1, self.joueur2)
-            self.moteur_combat.start_combat()
+            self.tour = 1
+            self.is_combat_over = False
+            for joueur in (self.joueur1, self.joueur2):
+                joueur.pv = joueur.pv_max
+                joueur.energie = joueur.energie_max
+                joueur.is_defending = False
             self.historique = [
                 f"Le combat commence ! {self.joueur1.nom} vs {self.joueur2.nom}",
                 f"C'est au tour de {self.joueur1.nom} !"
@@ -60,11 +64,11 @@ class Game:
             tuple: (succès(bool), est_fini(bool))
         """
         # Vérifie si le combat est prêt
-        if not self.moteur_combat or self.moteur_combat.is_combat_over:
+        if self.tour is None or self.is_combat_over:
             return False, False
 
         # Récupère le joueur actuel et son adversaire
-        joueur_actuel = self.moteur_combat.get_current_player()
+        joueur_actuel = self.get_current_player()
         adversaire = self.joueur2 if joueur_actuel == self.joueur1 else self.joueur1
 
         # Exécute l'action demandée
@@ -91,31 +95,34 @@ class Game:
             self.gagnant = joueur_actuel
             message_victoire = f"{joueur_actuel.nom} remporte le combat !"
             self.historique.append(message_victoire)
-            self.moteur_combat.is_combat_over = True
+            self.is_combat_over = True
             return True, True
 
-        # CORRECTION CRITIQUE : Passer au tour suivant
-        self.moteur_combat.next_turn()
-        
-        # Ajoute un message pour le nouveau tour
-        nouveau_joueur = self.moteur_combat.get_current_player()
-        self.historique.append(f"Au tour de {nouveau_joueur.nom} !")
-        
+        self.next_turn()
+        self.historique.append(f"Au tour de {self.get_current_player().nom} !")
+
         return True, False
 
     def executer_action_ia(self):
         """Joue le tour de l'IA : attaque spéciale si elle peut la payer, sinon recharge."""
-        if not self.moteur_combat or self.moteur_combat.is_combat_over:
+        if self.tour is None or self.is_combat_over:
             return False, False
-        joueur = self.moteur_combat.get_current_player()
+        joueur = self.get_current_player()
         action = 'special' if joueur.energie >= joueur.special_cost else 'recharger'
         return self.executer_action(action)
 
+    def get_current_player(self):
+        """Retourne le personnage dont c'est le tour."""
+        return self.joueur1 if self.tour == 1 else self.joueur2
+
+    def next_turn(self):
+        """Passe au tour suivant et réinitialise la défense du joueur qui commence."""
+        self.tour = 2 if self.tour == 1 else 1
+        self.get_current_player().is_defending = False
+
     def get_joueur_actuel(self):
         """Retourne le numéro du joueur dont c'est le tour (1 ou 2)"""
-        if not self.moteur_combat:
-            return None
-        return 1 if self.moteur_combat.get_current_player() == self.joueur1 else 2
+        return self.tour
 
     def get_etat_combat(self):
         """
@@ -148,35 +155,3 @@ class Game:
             'tour': self.get_joueur_actuel()
         }
 
-class CombatEngine:
-    """Gestion des tours de combat"""
-    def __init__(self, joueur1, joueur2):
-        self.joueur1 = joueur1
-        self.joueur2 = joueur2
-        self.tour_joueur1 = True  # True = tour du joueur1, False = tour du joueur2
-        self.is_combat_over = False
-
-    def start_combat(self):
-        """Réinitialise l'état pour un nouveau combat"""
-        self.tour_joueur1 = True
-        self.is_combat_over = False
-        # Réinitialise l'état des joueurs
-        self.joueur1.pv = self.joueur1.pv_max
-        self.joueur1.energie = self.joueur1.energie_max
-        self.joueur2.pv = self.joueur2.pv_max
-        self.joueur2.energie = self.joueur2.energie_max
-        self.joueur1.is_defending = False
-        self.joueur2.is_defending = False
-
-    def get_current_player(self):
-        """Retourne le joueur dont c'est le tour"""
-        return self.joueur1 if self.tour_joueur1 else self.joueur2
-
-    def next_turn(self):
-        """Passe au tour suivant et réinitialise la défense"""
-        # Change de tour
-        self.tour_joueur1 = not self.tour_joueur1
-        
-        # Réinitialise l'état de défense pour le nouveau joueur
-        current_player = self.get_current_player()
-        current_player.is_defending = False
