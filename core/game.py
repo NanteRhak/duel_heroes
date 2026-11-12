@@ -103,6 +103,14 @@ class Game:
         
         return True, False
 
+    def executer_action_ia(self):
+        """Joue le tour de l'IA : attaque spéciale si elle peut la payer, sinon recharge."""
+        if not self.moteur_combat or self.moteur_combat.is_combat_over:
+            return False, False
+        joueur = self.moteur_combat.get_current_player()
+        action = 'special' if joueur.energie >= joueur.special_cost else 'recharger'
+        return self.executer_action(action)
+
     def get_joueur_actuel(self):
         """Retourne le numéro du joueur dont c'est le tour (1 ou 2)"""
         if not self.moteur_combat:
