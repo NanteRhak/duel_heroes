@@ -30,14 +30,14 @@ class DuelApp(tk.Tk):
         ttk.Label(self.selection_frame, text="Player 1").grid(row=0, column=0)
         self.p1_name = ttk.Entry(self.selection_frame)
         self.p1_name.grid(row=1, column=0)
-        self.p1_class = ttk.Combobox(self.selection_frame, values=["Guerrier", "Mage", "Archer"])
+        self.p1_class = ttk.Combobox(self.selection_frame, values=["Warrior", "Mage", "Archer"])
         self.p1_class.grid(row=2, column=0)
         self.p1_class.current(0)
         
         ttk.Label(self.selection_frame, text="Player 2").grid(row=0, column=1)
         self.p2_name = ttk.Entry(self.selection_frame)
         self.p2_name.grid(row=1, column=1)
-        self.p2_class = ttk.Combobox(self.selection_frame, values=["Guerrier", "Mage", "Archer"])
+        self.p2_class = ttk.Combobox(self.selection_frame, values=["Warrior", "Mage", "Archer"])
         self.p2_class.grid(row=2, column=1)
         self.p2_class.current(1)
         
@@ -53,13 +53,13 @@ class DuelApp(tk.Tk):
         self.action_frame = ttk.Frame(self.combat_frame)
         self.action_frame.grid(row=1, column=0, columnspan=2)
         
-        self.attack_btn = ttk.Button(self.action_frame, text="Attack", command=lambda: self.execute_action("attaquer"))
+        self.attack_btn = ttk.Button(self.action_frame, text="Attack", command=lambda: self.execute_action("attack"))
         self.attack_btn.grid(row=0, column=0)
         self.special_btn = ttk.Button(self.action_frame, text="Special", command=lambda: self.execute_action("special"))
         self.special_btn.grid(row=0, column=1)
-        self.defend_btn = ttk.Button(self.action_frame, text="Defend", command=lambda: self.execute_action("defendre"))
+        self.defend_btn = ttk.Button(self.action_frame, text="Defend", command=lambda: self.execute_action("defend"))
         self.defend_btn.grid(row=0, column=2)
-        self.recharge_btn = ttk.Button(self.action_frame, text="Recharge", command=lambda: self.execute_action("recharger"))
+        self.recharge_btn = ttk.Button(self.action_frame, text="Recharge", command=lambda: self.execute_action("recharge"))
         self.recharge_btn.grid(row=0, column=3)
         
         self.tour_label = ttk.Label(self.combat_frame, text="", font=('Arial', 12, 'bold'))

@@ -20,7 +20,7 @@ class Game:
         Returns:
             bool: True si création réussie
         """
-        if classe.lower() == 'guerrier':
+        if classe.lower() == 'warrior':
             perso = Guerrier(nom)
         elif classe.lower() == 'mage':
             perso = Mage(nom)
@@ -48,8 +48,8 @@ class Game:
                 joueur.energie = joueur.energie_max
                 joueur.is_defending = False
             self.historique = [
-                f"Le combat commence ! {self.joueur1.nom} vs {self.joueur2.nom}",
-                f"C'est au tour de {self.joueur1.nom} !"
+                f"The duel begins! {self.joueur1.nom} vs {self.joueur2.nom}",
+                f"{self.joueur1.nom}'s turn!"
             ]
             self.gagnant = None
             return True
@@ -59,7 +59,7 @@ class Game:
         """
         Exécute une action pour le joueur courant
         Args:
-            action (str): 'attaquer', 'special', 'defendre', 'recharger'
+            action (str): 'attack', 'special', 'defend', 'recharge'
         Returns:
             tuple: (succès(bool), est_fini(bool))
         """
@@ -72,18 +72,18 @@ class Game:
         adversaire = self.joueur2 if joueur_actuel == self.joueur1 else self.joueur1
 
         # Exécute l'action demandée
-        if action == 'attaquer':
+        if action == 'attack':
             resultat = joueur_actuel.attaque_normale(adversaire)
         elif action == 'special':
             resultat = joueur_actuel.attaque_speciale(adversaire)
             if not resultat:  # Énergie insuffisante
                 return False, False
-        elif action == 'defendre':
+        elif action == 'defend':
             joueur_actuel.defendre()
-            resultat = f"{joueur_actuel.nom} se met en position défensive"
-        elif action == 'recharger':
+            resultat = f"{joueur_actuel.nom} takes a defensive stance"
+        elif action == 'recharge':
             joueur_actuel.recharger_energie()
-            resultat = f"{joueur_actuel.nom} recharge son énergie"
+            resultat = f"{joueur_actuel.nom} recharges energy"
         else:
             return False, False
 
@@ -93,13 +93,13 @@ class Game:
         # Vérifie si le combat est terminé
         if adversaire.est_ko():
             self.gagnant = joueur_actuel
-            message_victoire = f"{joueur_actuel.nom} remporte le combat !"
+            message_victoire = f"{joueur_actuel.nom} wins the duel!"
             self.historique.append(message_victoire)
             self.is_combat_over = True
             return True, True
 
         self.next_turn()
-        self.historique.append(f"Au tour de {self.get_current_player().nom} !")
+        self.historique.append(f"{self.get_current_player().nom}'s turn!")
 
         return True, False
 
@@ -108,7 +108,7 @@ class Game:
         if self.tour is None or self.is_combat_over:
             return False, False
         joueur = self.get_current_player()
-        action = 'special' if joueur.energie >= joueur.special_cost else 'recharger'
+        action = 'special' if joueur.energie >= joueur.special_cost else 'recharge'
         return self.executer_action(action)
 
     def get_current_player(self):

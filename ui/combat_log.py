@@ -64,22 +64,22 @@ class CombatLog(tk.Frame):
         """
         tags = ()
         
-        if any(x in message for x in ["-PV", "frappe", "tire", "lance"]):
-            if "Joueur 1" in message or "Guerrier" in message or "Mage" in message:
+        if any(x in message for x in ["strikes", "fires", "casts", "unleashes", "looses", "summons"]):
+            if "Player 1" in message or "Warrior" in message or "Mage" in message:
                 tags += ('player1',)
-            elif "Joueur 2" in message or "Archer" in message:
+            elif "Player 2" in message or "Archer" in message:
                 tags += ('player2',)
             
-            if any(x in message for x in ["spéciale", "tempête", "critique", "puissante"]):
+            if any(x in message for x in ["powerful", "storm", "precise"]):
                 tags += ('special',)
             elif "-" in message:
                 tags += ('damage',)
         
-        elif "Combat" in message or "tour" in message:
+        elif "duel" in message or "turn" in message:
             tags += ('system',)
-        elif "énergie" in message or "défense" in message:
+        elif "energy" in message or "defensive" in message:
             tags += ('system',)
-        elif "pas assez" in message or "impossible" in message:
+        elif "not enough" in message or "unavailable" in message:
             tags += ('warning',)
             
         return tags if tags else ()

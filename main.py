@@ -11,7 +11,7 @@ def main():
         app = DuelApp()
         app.run()
     except Exception as e:
-        print(f"Une erreur critique est survenue : {str(e)}", file=sys.stderr)
+        print(f"A critical error occurred: {str(e)}", file=sys.stderr)
         traceback.print_exc()
         sys.exit(1)
 

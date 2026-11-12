@@ -60,7 +60,7 @@ class Guerrier(Personnage):
         """Coup d'épée standard"""
         degats = 15
         degats_infliges = cible.recevoir_degats(degats)
-        return f"{self.nom} frappe avec son épée (-{degats_infliges} PV)"
+        return f"{self.nom} strikes with a sword (-{degats_infliges} HP)"
 
     def attaque_speciale(self, cible):
         """Frappe puissante avec chance d'étourdissement"""
@@ -68,7 +68,7 @@ class Guerrier(Personnage):
             self.energie -= self.special_cost
             degats = 25
             degats_infliges = cible.recevoir_degats(degats)
-            return f"{self.nom} lance une frappe puissante ! (-{degats_infliges} PV)"
+            return f"{self.nom} unleashes a powerful blow! (-{degats_infliges} HP)"
         return None
 
 
@@ -81,7 +81,7 @@ class Mage(Personnage):
         """Boule de feu élémentaire"""
         degats = 20
         degats_infliges = cible.recevoir_degats(degats)
-        return f"{self.nom} lance une boule de feu (-{degats_infliges} PV)"
+        return f"{self.nom} casts a fireball (-{degats_infliges} HP)"
 
     def attaque_speciale(self, cible):
         """Tempête élémentaire (ignore la défense)"""
@@ -92,7 +92,7 @@ class Mage(Personnage):
             cible.is_defending = False  # Ignore la défense
             degats_infliges = cible.recevoir_degats(degats)
             cible.is_defending = was_defending
-            return f"{self.nom} invoque une tempête élémentaire ! (-{degats_infliges} PV)"
+            return f"{self.nom} summons an elemental storm! (-{degats_infliges} HP)"
         return None
 
 
@@ -107,14 +107,14 @@ class Archer(Personnage):
         degats2 = 12
         total = 0
         
-        msg = f"{self.nom} tire deux flèches rapides : "
+        msg = f"{self.nom} fires two quick arrows: "
         degats_infliges = cible.recevoir_degats(degats1)
         total += degats_infliges
-        msg += f"première (-{degats_infliges} PV), "
+        msg += f"first (-{degats_infliges} HP), "
         
         degats_infliges = cible.recevoir_degats(degats2)
         total += degats_infliges
-        msg += f"seconde (-{degats_infliges} PV)"
+        msg += f"second (-{degats_infliges} HP)"
         
         return msg
 
@@ -124,5 +124,5 @@ class Archer(Personnage):
             self.energie -= self.special_cost
             degats = 40
             degats_infliges = cible.recevoir_degats(degats)
-            return f"{self.nom} décoche un tir précis ! (-{degats_infliges} PV)"
+            return f"{self.nom} looses a precise shot! (-{degats_infliges} HP)"
         return None
