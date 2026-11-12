@@ -6,118 +6,137 @@ from core.game import Game
 class GameTest(unittest.TestCase):
     def setUp(self):
         self.game = Game()
-        self.assertTrue(self.game.creer_personnage("warrior", "A", 1))
-        self.assertTrue(self.game.creer_personnage("mage", "B", 2))
-        self.assertTrue(self.game.demarrer_combat())
+        self.assertTrue(self.game.create_character("warrior", "A", 1))
+        self.assertTrue(self.game.create_character("mage", "B", 2))
+        self.assertTrue(self.game.start_combat())
 
     def test_attack_reduces_hp_and_passes_turn(self):
-        self.game.executer_action("attack")
-        self.assertEqual(self.game.joueur2.pv, 85)
-        self.assertEqual(self.game.get_etat_combat()["tour"], 2)
+        self.game.perform_action("attack")
+        self.assertEqual(self.game.player2.hp, 85)
+        self.assertEqual(self.game.get_state()["turn"], 2)
 
     def test_reported_damage_cannot_exceed_remaining_hp(self):
-        self.game.joueur2.pv = 5
-        self.game.executer_action("attack")
-        self.assertEqual(self.game.joueur2.pv, 0)
-        self.assertTrue(any("(-5 HP)" in ligne for ligne in self.game.historique))
-        self.assertFalse(any("(-15 HP)" in ligne for ligne in self.game.historique))
+        self.game.player2.hp = 5
+        self.game.perform_action("attack")
+        self.assertEqual(self.game.player2.hp, 0)
+        self.assertTrue(any("(-5 HP)" in line for line in self.game.history))
+        self.assertFalse(any("(-15 HP)" in line for line in self.game.history))
 
     def test_ai_uses_a_special_then_returns_the_turn(self):
-        self.game.executer_action("attack")
-        ok, fini = self.game.executer_action_ia()
+        self.game.perform_action("attack")
+        ok, finished = self.game.perform_ai_action()
         self.assertTrue(ok)
-        self.assertFalse(fini)
-        self.assertEqual(self.game.joueur2.energie, 20)
-        self.assertEqual(self.game.get_etat_combat()["tour"], 1)
+        self.assertFalse(finished)
+        self.assertEqual(self.game.player2.energy, 20)
+        self.assertEqual(self.game.get_state()["turn"], 1)
 
     def test_ai_recharges_when_it_cannot_pay(self):
-        self.game.executer_action("attack")
-        self.game.executer_action_ia()
-        self.game.executer_action("attack")
-        ok, fini = self.game.executer_action_ia()
+        self.game.perform_action("attack")
+        self.game.perform_ai_action()
+        self.game.perform_action("attack")
+        ok, finished = self.game.perform_ai_action()
         self.assertTrue(ok)
-        self.assertFalse(fini)
-        self.assertEqual(self.game.joueur2.energie, 30)
-        self.assertEqual(self.game.get_etat_combat()["tour"], 1)
+        self.assertFalse(finished)
+        self.assertEqual(self.game.player2.energy, 30)
+        self.assertEqual(self.game.get_state()["turn"], 1)
 
     def test_defend_halves_next_hit_once(self):
-        self.game.executer_action("defend")
-        self.game.executer_action("attack")
-        self.assertEqual(self.game.joueur1.pv, 90)
-        self.game.executer_action("attack")
-        self.assertEqual(self.game.joueur2.pv, 85)
-        self.game.executer_action("attack")
-        self.assertEqual(self.game.joueur1.pv, 70)
+        self.game.perform_action("defend")
+        self.game.perform_action("attack")
+        self.assertEqual(self.game.player1.hp, 90)
+        self.game.perform_action("attack")
+        self.assertEqual(self.game.player2.hp, 85)
+        self.game.perform_action("attack")
+        self.assertEqual(self.game.player1.hp, 70)
 
     def test_special_without_energy_is_refused_and_keeps_the_turn(self):
-        self.game.executer_action("special")
-        self.game.executer_action("recharge")
-        self.game.executer_action("special")
-        self.game.executer_action("recharge")
-        pv_avant = self.game.joueur2.pv
-        ok, fini = self.game.executer_action("special")
+        self.game.perform_action("special")
+        self.game.perform_action("recharge")
+        self.game.perform_action("special")
+        self.game.perform_action("recharge")
+        hp_before = self.game.player2.hp
+        ok, finished = self.game.perform_action("special")
         self.assertFalse(ok)
-        self.assertFalse(fini)
-        self.assertEqual(self.game.joueur1.energie, 10)
-        self.assertEqual(self.game.joueur2.pv, pv_avant)
-        self.assertEqual(self.game.get_etat_combat()["tour"], 1)
+        self.assertFalse(finished)
+        self.assertEqual(self.game.player1.energy, 10)
+        self.assertEqual(self.game.player2.hp, hp_before)
+        self.assertEqual(self.game.get_state()["turn"], 1)
 
     def test_recharge_caps_at_maximum(self):
-        self.game.executer_action("recharge")
-        self.assertEqual(self.game.joueur1.energie, 50)
-        self.assertEqual(self.game.get_etat_combat()["tour"], 2)
+        self.game.perform_action("recharge")
+        self.assertEqual(self.game.player1.energy, 50)
+        self.assertEqual(self.game.get_state()["turn"], 2)
 
     def test_duel_ends_and_names_the_right_winner(self):
         g = Game()
-        self.assertTrue(g.creer_personnage("warrior", "C", 1))
-        self.assertTrue(g.creer_personnage("warrior", "D", 2))
-        self.assertTrue(g.demarrer_combat())
+        self.assertTrue(g.create_character("warrior", "C", 1))
+        self.assertTrue(g.create_character("warrior", "D", 2))
+        self.assertTrue(g.start_combat())
 
-        fini = False
+        finished = False
         for _ in range(50):
-            ok, fini = g.executer_action("attack")
+            ok, finished = g.perform_action("attack")
             self.assertTrue(ok)
-            if fini:
+            if finished:
                 break
-            ok, fini = g.executer_action_ia()
+            ok, finished = g.perform_ai_action()
             self.assertTrue(ok)
-            if fini:
+            if finished:
                 break
 
-        self.assertTrue(fini)
-        self.assertIs(g.gagnant, g.joueur1)
-        self.assertEqual(g.joueur2.pv, 0)
-        self.assertGreater(g.joueur1.pv, 0)
+        self.assertTrue(finished)
+        self.assertIs(g.winner, g.player1)
+        self.assertEqual(g.player2.hp, 0)
+        self.assertGreater(g.player1.hp, 0)
 
     def test_new_duel_resets_both_heroes(self):
-        self.game.executer_action("attack")
-        self.game.executer_action_ia()
-        self.game.executer_action("defend")
+        self.game.perform_action("attack")
+        self.game.perform_ai_action()
+        self.game.perform_action("defend")
 
-        self.assertTrue(self.game.demarrer_combat())
+        self.assertTrue(self.game.start_combat())
 
-        for joueur in (self.game.joueur1, self.game.joueur2):
-            self.assertEqual(joueur.pv, joueur.pv_max)
-            self.assertEqual(joueur.energie, joueur.energie_max)
-            self.assertFalse(joueur.is_defending)
-        self.assertEqual(self.game.get_etat_combat()["tour"], 1)
-        self.assertIsNone(self.game.gagnant)
+        for player in (self.game.player1, self.game.player2):
+            self.assertEqual(player.hp, player.max_hp)
+            self.assertEqual(player.energy, player.max_energy)
+            self.assertFalse(player.is_defending)
+        self.assertEqual(self.game.get_state()["turn"], 1)
+        self.assertIsNone(self.game.winner)
+
+    def test_new_duel_after_a_win_is_playable(self):
+        finished = False
+        for _ in range(50):
+            ok, finished = self.game.perform_action("attack")
+            self.assertTrue(ok)
+            if finished:
+                break
+            ok, finished = self.game.perform_ai_action()
+            self.assertTrue(ok)
+            if finished:
+                break
+        self.assertTrue(finished)
+        self.assertIsNotNone(self.game.winner)
+
+        self.assertTrue(self.game.start_combat())
+        ok, finished = self.game.perform_action("attack")
+        self.assertTrue(ok)
+        self.assertFalse(finished)
 
     def test_ai_never_makes_an_illegal_move_in_a_full_duel(self):
-        fini = False
+        finished = False
         for _ in range(60):
-            ok, fini = self.game.executer_action("attack")
+            ok, finished = self.game.perform_action("attack")
             self.assertTrue(ok)
-            if fini:
+            if finished:
                 break
-            ok, fini = self.game.executer_action_ia()
+            ok, finished = self.game.perform_ai_action()
             self.assertTrue(ok)
-            if fini:
+            if finished:
                 break
 
-        self.assertTrue(fini)
-        self.assertEqual(min(self.game.joueur1.pv, self.game.joueur2.pv), 0)
-        self.assertGreaterEqual(self.game.joueur2.energie, 0)
+        self.assertTrue(finished)
+        self.assertEqual(min(self.game.player1.hp, self.game.player2.hp), 0)
+        self.assertGreaterEqual(self.game.player2.energy, 0)
 
 
 if __name__ == "__main__":

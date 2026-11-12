@@ -1,128 +1,108 @@
 from abc import ABC, abstractmethod
 
-class Personnage(ABC):
-    def __init__(self, nom):
-        """
-        Classe abstraite représentant un personnage de base
-        Args:
-            nom (str): Nom du personnage
-        """
-        self.nom = nom
-        self.pv_max = 100
-        self.pv = self.pv_max
-        self.energie_max = 50
-        self.energie = self.energie_max
+
+class Character(ABC):
+    def __init__(self, name):
+        """Base hero shared by every class."""
+        self.name = name
+        self.max_hp = 100
+        self.hp = self.max_hp
+        self.max_energy = 50
+        self.energy = self.max_energy
         self.is_defending = False
-        self.special_cost = 25  # Coût de base pour l'attaque spéciale
+        self.special_cost = 25
 
     @abstractmethod
-    def attaque_normale(self, cible):
-        """Attaque de base du personnage"""
-        pass
+    def attack(self, target):
+        """Basic attack."""
 
     @abstractmethod
-    def attaque_speciale(self, cible):
-        """Attaque spéciale du personnage"""
-        pass
+    def special_attack(self, target):
+        """Special attack."""
 
-    def defendre(self):
-        """Active le mode défense pour le tour"""
+    def defend(self):
+        """Halve the next incoming hit."""
         self.is_defending = True
 
-    def recharger_energie(self, amount=10):
-        """Recharge l'énergie du personnage"""
-        self.energie = min(self.energie + amount, self.energie_max)
+    def recharge_energy(self, amount=10):
+        """Restore energy, capped at the maximum."""
+        self.energy = min(self.energy + amount, self.max_energy)
 
-    def recevoir_degats(self, degats):
-        """
-        Applique les dégâts au personnage en tenant compte de la défense
-        Retourne les dégâts réellement subis
-        """
+    def take_damage(self, damage):
+        """Apply damage after defence and return the HP actually lost."""
         if self.is_defending:
-            degats = max(1, degats // 2)  # Réduction de 50% (min 1 dégât)
+            damage = max(1, damage // 2)
             self.is_defending = False
-        
-        avant = self.pv
-        self.pv = max(0, self.pv - degats)
-        return avant - self.pv
 
-    def est_ko(self):
-        """Vérifie si le personnage est K.O."""
-        return self.pv <= 0
+        before = self.hp
+        self.hp = max(0, self.hp - damage)
+        return before - self.hp
+
+    def is_ko(self):
+        """Whether the hero is knocked out."""
+        return self.hp <= 0
 
 
-class Guerrier(Personnage):
-    def __init__(self, nom):
-        super().__init__(nom)
+class Warrior(Character):
+    def __init__(self, name):
+        super().__init__(name)
         self.special_cost = 20
 
-    def attaque_normale(self, cible):
-        """Coup d'épée standard"""
-        degats = 15
-        degats_infliges = cible.recevoir_degats(degats)
-        return f"{self.nom} strikes with a sword (-{degats_infliges} HP)"
+    def attack(self, target):
+        """Sword strike."""
+        damage = 15
+        damage_dealt = target.take_damage(damage)
+        return f"{self.name} strikes with a sword (-{damage_dealt} HP)"
 
-    def attaque_speciale(self, cible):
-        """Frappe puissante avec chance d'étourdissement"""
-        if self.energie >= self.special_cost:
-            self.energie -= self.special_cost
-            degats = 25
-            degats_infliges = cible.recevoir_degats(degats)
-            return f"{self.nom} unleashes a powerful blow! (-{degats_infliges} HP)"
+    def special_attack(self, target):
+        """Powerful blow."""
+        if self.energy >= self.special_cost:
+            self.energy -= self.special_cost
+            damage = 25
+            damage_dealt = target.take_damage(damage)
+            return f"{self.name} unleashes a powerful blow! (-{damage_dealt} HP)"
         return None
 
 
-class Mage(Personnage):
-    def __init__(self, nom):
-        super().__init__(nom)
+class Mage(Character):
+    def __init__(self, name):
+        super().__init__(name)
         self.special_cost = 30
 
-    def attaque_normale(self, cible):
-        """Boule de feu élémentaire"""
-        degats = 20
-        degats_infliges = cible.recevoir_degats(degats)
-        return f"{self.nom} casts a fireball (-{degats_infliges} HP)"
+    def attack(self, target):
+        """Fireball."""
+        damage = 20
+        damage_dealt = target.take_damage(damage)
+        return f"{self.name} casts a fireball (-{damage_dealt} HP)"
 
-    def attaque_speciale(self, cible):
-        """Tempête élémentaire (ignore la défense)"""
-        if self.energie >= self.special_cost:
-            self.energie -= self.special_cost
-            degats = 35
-            was_defending = cible.is_defending
-            cible.is_defending = False  # Ignore la défense
-            degats_infliges = cible.recevoir_degats(degats)
-            cible.is_defending = was_defending
-            return f"{self.nom} summons an elemental storm! (-{degats_infliges} HP)"
+    def special_attack(self, target):
+        """Elemental storm that ignores defence."""
+        if self.energy >= self.special_cost:
+            self.energy -= self.special_cost
+            damage = 35
+            was_defending = target.is_defending
+            target.is_defending = False
+            damage_dealt = target.take_damage(damage)
+            target.is_defending = was_defending
+            return f"{self.name} summons an elemental storm! (-{damage_dealt} HP)"
         return None
 
 
-class Archer(Personnage):
-    def __init__(self, nom):
-        super().__init__(nom)
+class Archer(Character):
+    def __init__(self, name):
+        super().__init__(name)
         self.special_cost = 15
 
-    def attaque_normale(self, cible):
-        """Tir rapide (double attaque)"""
-        degats1 = 12
-        degats2 = 12
-        total = 0
-        
-        msg = f"{self.nom} fires two quick arrows: "
-        degats_infliges = cible.recevoir_degats(degats1)
-        total += degats_infliges
-        msg += f"first (-{degats_infliges} HP), "
-        
-        degats_infliges = cible.recevoir_degats(degats2)
-        total += degats_infliges
-        msg += f"second (-{degats_infliges} HP)"
-        
-        return msg
+    def attack(self, target):
+        """Two quick arrows."""
+        first = target.take_damage(12)
+        second = target.take_damage(12)
+        return f"{self.name} fires two quick arrows: first (-{first} HP), second (-{second} HP)"
 
-    def attaque_speciale(self, cible):
-        """Tir précis (dégâts critiques)"""
-        if self.energie >= self.special_cost:
-            self.energie -= self.special_cost
-            degats = 40
-            degats_infliges = cible.recevoir_degats(degats)
-            return f"{self.nom} looses a precise shot! (-{degats_infliges} HP)"
+    def special_attack(self, target):
+        """Precise shot."""
+        if self.energy >= self.special_cost:
+            self.energy -= self.special_cost
+            damage_dealt = target.take_damage(40)
+            return f"{self.name} looses a precise shot! (-{damage_dealt} HP)"
         return None

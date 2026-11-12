@@ -1,20 +1,27 @@
-### Description:
+# Duel of Heroes
 
-Ce programme est une simulation de jeu de combat à tour de rôle développé en Python avec une interface graphique de Tkinter.
+A turn-based duel simulator with a Tkinter interface. You play one hero against a simple AI opponent.
 
-### **Prérequis :**
-+ Python 3 installée
-+ Tkinter
-+ Git (pour cloner le repo)
+## Requirements
 
-### **Installation**
+- Python 3
+- Tkinter (bundled with most Python installs)
 
-D'abord, cloner le repo
+## Run
+
 ```bash
 git clone https://github.com/NanteRhak/duel_heroes
-```
-Ensuite, lancer l'application avec la commande Python en ligne de commande
-```bash
 cd duel_heroes
 python main.py
 ```
+
+## How to play
+
+Type a name for each hero, pick Warrior, Mage or Archer, then start the duel. On your turn, choose one action:
+
+- **Attack** — basic damage.
+- **Special** — costs energy; each class has its own.
+- **Defend** — halves the next incoming hit.
+- **Recharge** — restores 10 energy.
+
+Reduce the opponent to 0 HP to win. This is single-player: player 2 is controlled by a simple AI.

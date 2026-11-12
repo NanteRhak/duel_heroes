@@ -1,157 +1,124 @@
-from core.characters import Guerrier, Mage, Archer
+from core.characters import Warrior, Mage, Archer
+
 
 class Game:
     def __init__(self):
-        """Initialise l'état du jeu"""
-        self.joueur1 = None
-        self.joueur2 = None
-        self.tour = None
+        """Hold the duel state."""
+        self.player1 = None
+        self.player2 = None
+        self.turn = None
         self.is_combat_over = False
-        self.historique = []
-        self.gagnant = None
+        self.history = []
+        self.winner = None
 
-    def creer_personnage(self, classe, nom, joueur_num):
-        """
-        Crée un personnage pour un joueur
-        Args:
-            classe (str): 'guerrier', 'mage' ou 'archer'
-            nom (str): Nom du personnage
-            joueur_num (int): 1 ou 2
-        Returns:
-            bool: True si création réussie
-        """
-        if classe.lower() == 'warrior':
-            perso = Guerrier(nom)
-        elif classe.lower() == 'mage':
-            perso = Mage(nom)
-        elif classe.lower() == 'archer':
-            perso = Archer(nom)
+    def create_character(self, character_class, name, player_number):
+        """Create a hero for player 1 or 2."""
+        if character_class.lower() == 'warrior':
+            character = Warrior(name)
+        elif character_class.lower() == 'mage':
+            character = Mage(name)
+        elif character_class.lower() == 'archer':
+            character = Archer(name)
         else:
             return False
 
-        if joueur_num == 1:
-            self.joueur1 = perso
+        if player_number == 1:
+            self.player1 = character
         else:
-            self.joueur2 = perso
+            self.player2 = character
         return True
 
-    def demarrer_combat(self):
-        """
-        Prépare et lance un nouveau combat
-        Returns:
-            bool: True si les deux joueurs sont prêts
-        """
-        if self.joueur1 and self.joueur2:
-            self.tour = 1
-            for joueur in (self.joueur1, self.joueur2):
-                joueur.pv = joueur.pv_max
-                joueur.energie = joueur.energie_max
-                joueur.is_defending = False
-            self.historique = [
-                f"The duel begins! {self.joueur1.nom} vs {self.joueur2.nom}",
-                f"{self.joueur1.nom}'s turn!"
+    def start_combat(self):
+        """Reset both heroes and start a new duel."""
+        if self.player1 and self.player2:
+            self.turn = 1
+            self.is_combat_over = False
+            for player in (self.player1, self.player2):
+                player.hp = player.max_hp
+                player.energy = player.max_energy
+                player.is_defending = False
+            self.history = [
+                f"The duel begins! {self.player1.name} vs {self.player2.name}",
+                f"{self.player1.name}'s turn!"
             ]
-            self.gagnant = None
+            self.winner = None
             return True
         return False
 
-    def executer_action(self, action):
-        """
-        Exécute une action pour le joueur courant
-        Args:
-            action (str): 'attack', 'special', 'defend', 'recharge'
-        Returns:
-            tuple: (succès(bool), est_fini(bool))
-        """
-        # Vérifie si le combat est prêt
-        if self.tour is None or self.is_combat_over:
+    def perform_action(self, action):
+        """Run one action for the current player and return (ok, finished)."""
+        if self.turn is None or self.is_combat_over:
             return False, False
 
-        # Récupère le joueur actuel et son adversaire
-        joueur_actuel = self.get_current_player()
-        adversaire = self.joueur2 if joueur_actuel == self.joueur1 else self.joueur1
+        current = self.get_current_player()
+        opponent = self.player2 if current is self.player1 else self.player1
 
-        # Exécute l'action demandée
         if action == 'attack':
-            resultat = joueur_actuel.attaque_normale(adversaire)
+            result = current.attack(opponent)
         elif action == 'special':
-            resultat = joueur_actuel.attaque_speciale(adversaire)
-            if not resultat:  # Énergie insuffisante
+            result = current.special_attack(opponent)
+            if not result:
                 return False, False
         elif action == 'defend':
-            joueur_actuel.defendre()
-            resultat = f"{joueur_actuel.nom} takes a defensive stance"
+            current.defend()
+            result = f"{current.name} takes a defensive stance"
         elif action == 'recharge':
-            joueur_actuel.recharger_energie()
-            resultat = f"{joueur_actuel.nom} recharges energy"
+            current.recharge_energy()
+            result = f"{current.name} recharges energy"
         else:
             return False, False
 
-        # Ajoute le résultat à l'historique
-        self.historique.append(resultat)
-        
-        # Vérifie si le combat est terminé
-        if adversaire.est_ko():
-            self.gagnant = joueur_actuel
-            message_victoire = f"{joueur_actuel.nom} wins the duel!"
-            self.historique.append(message_victoire)
+        self.history.append(result)
+
+        if opponent.is_ko():
+            self.winner = current
+            self.history.append(f"{current.name} wins the duel!")
             self.is_combat_over = True
             return True, True
 
         self.next_turn()
-        self.historique.append(f"{self.get_current_player().nom}'s turn!")
+        self.history.append(f"{self.get_current_player().name}'s turn!")
 
         return True, False
 
-    def executer_action_ia(self):
-        """Joue le tour de l'IA : attaque spéciale si elle peut la payer, sinon recharge."""
-        if self.tour is None or self.is_combat_over:
+    def perform_ai_action(self):
+        """Special attack if affordable, otherwise recharge."""
+        if self.turn is None or self.is_combat_over:
             return False, False
-        joueur = self.get_current_player()
-        action = 'special' if joueur.energie >= joueur.special_cost else 'recharge'
-        return self.executer_action(action)
+        player = self.get_current_player()
+        action = 'special' if player.energy >= player.special_cost else 'recharge'
+        return self.perform_action(action)
 
     def get_current_player(self):
-        """Retourne le personnage dont c'est le tour."""
-        return self.joueur1 if self.tour == 1 else self.joueur2
+        """Return the hero whose turn it is."""
+        return self.player1 if self.turn == 1 else self.player2
 
     def next_turn(self):
-        """Passe au tour suivant et réinitialise la défense du joueur qui commence."""
-        self.tour = 2 if self.tour == 1 else 1
+        """Switch turns and clear the new player's defence."""
+        self.turn = 2 if self.turn == 1 else 1
         self.get_current_player().is_defending = False
 
-    def get_joueur_actuel(self):
-        """Retourne le numéro du joueur dont c'est le tour (1 ou 2)"""
-        return self.tour
+    def current_player_number(self):
+        """Return 1 or 2 for the current player."""
+        return self.turn
 
-    def get_etat_combat(self):
-        """
-        Retourne l'état actuel du combat
-        Returns:
-            dict: {
-                'joueur1': { 'nom': str, 'pv': int, 'energie': int },
-                'joueur2': { 'nom': str, 'pv': int, 'energie': int },
-                'historique': list[str],
-                'tour': int (1 ou 2)
-            }
-        """
-        # CORRECTION : Gestion des cas où les joueurs ne sont pas initialisés
-        joueur1_data = {
-            'nom': self.joueur1.nom,
-            'pv': self.joueur1.pv,
-            'energie': self.joueur1.energie
-        } if self.joueur1 else {'nom': 'Joueur 1', 'pv': 0, 'energie': 0}
-        
-        joueur2_data = {
-            'nom': self.joueur2.nom,
-            'pv': self.joueur2.pv,
-            'energie': self.joueur2.energie
-        } if self.joueur2 else {'nom': 'Joueur 2', 'pv': 0, 'energie': 0}
-        
+    def get_state(self):
+        """Return both heroes' stats, the history and the current player."""
+        player1_data = {
+            'name': self.player1.name,
+            'hp': self.player1.hp,
+            'energy': self.player1.energy
+        } if self.player1 else {'name': 'Player 1', 'hp': 0, 'energy': 0}
+
+        player2_data = {
+            'name': self.player2.name,
+            'hp': self.player2.hp,
+            'energy': self.player2.energy
+        } if self.player2 else {'name': 'Player 2', 'hp': 0, 'energy': 0}
+
         return {
-            'joueur1': joueur1_data,
-            'joueur2': joueur2_data,
-            'historique': self.historique,
-            'tour': self.get_joueur_actuel()
+            'player1': player1_data,
+            'player2': player2_data,
+            'history': self.history,
+            'turn': self.current_player_number()
         }
-
