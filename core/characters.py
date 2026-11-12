@@ -42,8 +42,9 @@ class Personnage(ABC):
             degats = max(1, degats // 2)  # Réduction de 50% (min 1 dégât)
             self.is_defending = False
         
+        avant = self.pv
         self.pv = max(0, self.pv - degats)
-        return degats
+        return avant - self.pv
 
     def est_ko(self):
         """Vérifie si le personnage est K.O."""
