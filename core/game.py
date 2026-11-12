@@ -6,6 +6,7 @@ class Game:
         self.joueur1 = None
         self.joueur2 = None
         self.tour = None
+        self.is_combat_over = False
         self.historique = []
         self.gagnant = None
 
@@ -42,7 +43,6 @@ class Game:
         """
         if self.joueur1 and self.joueur2:
             self.tour = 1
-            self.is_combat_over = False
             for joueur in (self.joueur1, self.joueur2):
                 joueur.pv = joueur.pv_max
                 joueur.energie = joueur.energie_max

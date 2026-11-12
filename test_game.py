@@ -89,6 +89,20 @@ class GameTest(unittest.TestCase):
         self.assertEqual(g.joueur2.pv, 0)
         self.assertGreater(g.joueur1.pv, 0)
 
+    def test_new_duel_resets_both_heroes(self):
+        self.game.executer_action("attaquer")
+        self.game.executer_action_ia()
+        self.game.executer_action("defendre")
+
+        self.assertTrue(self.game.demarrer_combat())
+
+        for joueur in (self.game.joueur1, self.game.joueur2):
+            self.assertEqual(joueur.pv, joueur.pv_max)
+            self.assertEqual(joueur.energie, joueur.energie_max)
+            self.assertFalse(joueur.is_defending)
+        self.assertEqual(self.game.get_etat_combat()["tour"], 1)
+        self.assertIsNone(self.game.gagnant)
+
     def test_ai_never_makes_an_illegal_move_in_a_full_duel(self):
         fini = False
         for _ in range(60):
