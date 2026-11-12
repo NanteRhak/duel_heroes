@@ -162,7 +162,7 @@ class DuelApp(tk.Tk):
             btn.state(["disabled"])
 
     def report_callback_exception(self, exc, val, tb):
-        traceback.print_exc()
+        traceback.print_exception(exc, val, tb)
 
     def run(self):
         self.mainloop()
