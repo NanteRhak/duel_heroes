@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+import traceback
 from core.game import Game
 from .combat_log import CombatLog
 
@@ -11,6 +12,8 @@ class DuelApp(tk.Tk):
         self.resizable(False, False)
         
         self.game = Game()
+        self._log_shown = 0
+        self._ia_job = None
         self.create_widgets()
         self.show_character_selection()
 
@@ -70,6 +73,9 @@ class DuelApp(tk.Tk):
         self.log.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
 
     def show_character_selection(self):
+        if self._ia_job is not None:
+            self.after_cancel(self._ia_job)
+            self._ia_job = None
         self.combat_frame.grid_remove()
         self.selection_frame.grid(row=0, column=0, sticky="nsew")
 
@@ -95,6 +101,7 @@ class DuelApp(tk.Tk):
             return
             
         self.log.clear()
+        self._log_shown = 0
         self.show_combat_interface()
 
     def execute_action(self, action):
@@ -112,11 +119,12 @@ class DuelApp(tk.Tk):
             messagebox.showinfo("Combat terminé", f"{self.game.gagnant.nom} a gagné !")
         else:
             # Lancer le tour de l'IA après un délai
-            self.after(1000, self.execute_ia_turn)
+            self._ia_job = self.after(1000, self.execute_ia_turn)
 
     def execute_ia_turn(self):
         """Exécute le tour de l'IA et met à jour l'interface"""
-        success, is_finished = self.game.executer_action_ia()
+        self._ia_job = None
+        _, is_finished = self.game.executer_action_ia()
         self.update_combat_display()
         
         if is_finished:
@@ -131,8 +139,9 @@ class DuelApp(tk.Tk):
         self.p2_stats.config(text=f"{state['joueur2']['nom']}\nPV: {state['joueur2']['pv']}\nÉnergie: {state['joueur2']['energie']}")
         
         # Mise à jour du journal
-        for msg in state['historique']:
+        for msg in state['historique'][self._log_shown:]:
             self.log.add_message(msg)
+        self._log_shown = len(state['historique'])
         
         # Gestion des boutons et label de tour
         current_turn = state['tour']
@@ -151,6 +160,9 @@ class DuelApp(tk.Tk):
     def disable_actions(self):
         for btn in [self.attack_btn, self.special_btn, self.defend_btn, self.recharge_btn]:
             btn.state(["disabled"])
+
+    def report_callback_exception(self, exc, val, tb):
+        traceback.print_exc()
 
     def run(self):
         self.mainloop()
